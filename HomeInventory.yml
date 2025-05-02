@@ -6,6 +6,67 @@ info:
 servers:
   - url: https://api.server.test/v1
 paths:
+  /inventory:
+    get:
+      description: Returns all inventories
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      tags:
+      - Inventory
+
+    post:
+      description: Create a new empty inventory
+      parameters:
+      - name: Inventory Name
+        in: query
+        description: The name of the new inventory to create
+        required: true
+        schema:
+          type: string
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      tags:
+      - Inventory
+
+    put:
+      description: Updates multiple inventories
+      requestBody:
+        required: true
+        description: Inventories to update
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+      responses:
+        '200':
+          description: Ok
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      tags:
+        - Inventory
+
   /inventory/{inventoryId}:
     get:
       parameters:
@@ -15,7 +76,7 @@ paths:
         required: true
         schema:
           type: string
-      description: Returns all inventory items for specified inventory
+      description: Returns the specified inventory
       responses:
         '200':
           description: OK
@@ -32,17 +93,71 @@ paths:
       tags:
       - Inventory
 
-    post:
+    delete:
       parameters:
-      - name: inventoryName
-        in: query
-        description: The name of the inventory to create
+      - name: inventoryId
+        in: path
+        description: The id of the desired inventory to delete
         required: true
         schema:
           type: string
+      responses:
+        '204':
+          description: Success
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      tags:
+        - Inventory
+
+  /inventory/{inventoryId}/items:
+    get:
+      description: Returns all items in the specified inventory
+      parameters:
+      - name: inventoryId
+        in: path
+        description: The id of the desired inventory
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      tags:
+      - Item
+    
+    post:
+      description: Add item(s) to the specified inventory
+      parameters:
+      - name: inventoryId
+        in: path
+        description: The id of the desired inventory to add items to
+        required: true
+        schema:
+          type: string
+      - name: combineWithExisting
+        in: query
+        description: Whether to combine with existing items (default is false)
+        required: false
+        schema:
+          type: boolean
+          default: true
       requestBody:
         required: true
-        description: Inventory items to add
+        description: Items to add to the inventory
         content:
           application/json:
             schema:
@@ -51,25 +166,26 @@ paths:
                 type: object
       responses:
         '201':
-          description: Ok
+          description: Created
         '401':
           description: Unauthorized
         '403':
           description: Forbidden
       tags:
-      - Inventory
-
+      - Item
+    
     put:
+      description: Update item(s) in the specified inventory
       parameters:
       - name: inventoryId
         in: path
-        description: The id of the desired inventory to update
+        description: The id of the desired inventory to update items in
         required: true
         schema:
           type: string
       requestBody:
         required: true
-        description: Inventory items to update
+        description: Items to update in the inventory
         content:
           application/json:
             schema:
@@ -83,31 +199,37 @@ paths:
           description: Unauthorized
         '403':
           description: Forbidden
-        '404':
-          description: Not Found
       tags:
-        - Inventory
-
+      - Item
+    
     delete:
+      description: Deletes all items in the specified inventory or bulk deletes items by passed IDs.
       parameters:
       - name: inventoryId
         in: path
-        description: The id of the desired inventory to delete
+        description: The id of the desired inventory to delete items from
         required: true
         schema:
           type: string
+      requestBody:
+        required: false
+        description: Optional list of item IDs to delete from the inventory
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
       responses:
         '204':
-          description: No Content
+          description: Success
         '401':
           description: Unauthorized
         '403':
           description: Forbidden
-        '404':
-          description: Not Found
       tags:
-        - Inventory
-
+      - Item
+      
   /inventory/{inventoryId}/item/{itemId}:
     get:
       parameters:
@@ -139,31 +261,6 @@ paths:
           description: Not Found
       tags:
       - Item
-
-    post:
-      parameters:
-      - name: inventoryId
-        in: path
-        description: The id of the desired inventory to add an item to
-        required: true
-        schema:
-          type: string
-      requestBody:
-        required: true
-        description: Item to add to the inventory
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        '201':
-          description: Created
-        '401':
-          description: Unauthorized
-        '403':
-          description: Forbidden
-      tags:
-        - Item
 
     put:
       parameters:
@@ -214,7 +311,7 @@ paths:
           type: string
       responses:
         '204':
-          description: No Content
+          description: Success
         '401':
           description: Unauthorized
         '403':
@@ -223,3 +320,226 @@ paths:
           description: Not Found
       tags:
         - Item
+
+  /inventory/{inventoryId}/locations:
+    get:
+      parameters:
+      - name: inventoryId
+        in: path
+        description: The id of the desired inventory
+        required: true
+        schema:
+          type: string
+      description: Returns all locations for the specified inventory
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      tags:
+      - Location
+
+    post:
+      parameters:
+      - name: inventoryId
+        in: path
+        description: The id(s) of the desired inventory to add a location to
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        description: Location to add to the inventory
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      tags:
+      - Location
+
+    put:
+      parameters:
+      - name: inventoryId
+        in: path
+        description: The id of the desired inventory to update locations in
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        description: Locations to update in the inventory
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+      responses:
+        '200':
+          description: Ok
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      tags:
+      - Location
+
+    delete:
+      parameters:
+      - name: inventoryId
+        in: path
+        description: The id of the desired inventory to delete locations from
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: false
+        description: Optional list of location IDs to delete from the inventory
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      responses:
+        '204':
+          description: Success
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      tags:
+      - Location
+
+  /inventory/{inventoryId}/location/{locationId}:
+    get:
+      parameters:
+      - name: inventoryId
+        in: path
+        description: The id of the desired inventory
+        required: true
+        schema:
+          type: string
+      - name: locationId
+        in: path
+        description: The id of the desired location to retrieve
+        required: true
+        schema:
+          type: string
+      description: Returns a specific location from the inventory
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      tags:
+      - Location
+
+    post:
+      parameters:
+      - name: inventoryId
+        in: path
+        description: The id of the desired inventory to add a location to
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        description: Location to add to the inventory
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Created
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+      tags:
+      - Location
+
+    put:
+      parameters:
+      - name: inventoryId
+        in: path
+        description: The id of the desired inventory to update a location in
+        required: true
+        schema:
+          type: string
+      - name: locationId
+        in: path
+        description: The id of the desired location to update
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        description: Location details to update in the inventory
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Ok
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      tags:
+      - Location
+
+    delete:
+      parameters:
+      - name: inventoryId
+        in: path
+        description: The id of the desired inventory to delete a location from
+        required: true
+        schema:
+          type: string
+      - name: locationId
+        in: path
+        description: The id of the desired location to delete
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Success
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      tags:
+      - Location
